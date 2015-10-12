@@ -1,9 +1,12 @@
 name: MTCDynamic
 id:   MTCDynamic
-version: 0.1
+version: 0.2
 author_link: http://alfasado.net/
 author_name: Alfasado Inc.
 description: MTCommerce Dynamic Handlers.
 tags:
     block:
         IfMTCLoggedIn?: sub{}
+    function:
+        MTCGetData: sub{}
+        MTCGetMemberData: sub{}
