@@ -1,12 +1,30 @@
 name: MTCDynamic
 id:   MTCDynamic
-version: 0.2
+key:  mtcdynamic
+
+version: 0.3
 author_link: http://alfasado.net/
 author_name: Alfasado Inc.
 description: MTCommerce Dynamic Handlers.
 tags:
     block:
-        IfMTCLoggedIn?: sub{}
+        IfMTCLoggedIn?: $mtcdynamic::MTCDynamic::Tags::_hdlr_if_mtc_logged_in
     function:
         MTCGetData: sub{}
-        MTCGetMemberData: sub{}
+        MTCGetMemberData: $mtcdynamic::MTCDynamic::Tags::_hdlr_mtc_get_member_data
+applications:
+    cms:
+        methods:
+            _mtc_test: 
+                code: $mtcdynamic::MTCDynamic::CMS::_mtc_test
+callbacks:
+    MT::App::CMS::post_run: >
+            sub {
+                my $app = MT->instance;
+                if ( $app->param( 'reboot' ) ) {
+                    $app->reboot;
+                }
+                if ( my $debug = MT->config( 'DebugMode' ) ) {
+                    $app->reboot;
+                }
+            }

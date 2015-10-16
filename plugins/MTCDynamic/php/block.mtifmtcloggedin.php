@@ -14,15 +14,23 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                 $prefix = $args[ 'prefix' ];
             }
             require_once( 'class.mtcmember.php' );
-            $where = '';
+            $where = 'member.delete_flag=0';
+            if ( isset( $args[ 'ignore_delete' ] ) ) {
+                if ( $args[ 'ignore_delete' ] ) $where = '';
+            }
+            $condition = "(member.id=shop_session.member_id AND shop_session.session_id='$shop_session') LIMIT 1";
+            if ( $where ) {
+                $condition = "${where} AND ${condition}";
+            }
             $_member = new MTCMember;
             $extras[ 'join' ] = array(
                 'shop_session' => array(
-                    'condition' => "(member.id=shop_session.member_id AND shop_session.session_id='$shop_session') LIMIT 1"
+                    'condition' => $condition
                 )
             );
-            $member = $_member->Find( $where, FALSE, FALSE, $extras );
+            $member = $_member->Find( '', FALSE, FALSE, $extras );
             if ( $member ) {
+                $ctx->__stash[ 'vars' ][ 'shop_session' ] = $shop_session;
                 $member = $member[ 0 ];
                 if (! $member->activated ) {
                     unset( $member );
