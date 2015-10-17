@@ -57,7 +57,8 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
     } elseif ( $get == 'cart_item' ) {
         require_once( 'class.mtccart.php' );
         $_cart = new MTCCart;
-        $cart = $_cart->Find( "member_id=${object_id}", FALSE, FALSE, array( 'limit' => 1 ) );
+        $shop_session = $ctx->__stash[ 'vars' ][ 'shop_session' ];
+        $cart = $_cart->Find( "shop_session_id=${shop_session}", FALSE, FALSE, array( 'limit' => 1 ) );
         if ( is_array( $cart ) ) {
             $cart = $cart[ 0 ];
         } else {
