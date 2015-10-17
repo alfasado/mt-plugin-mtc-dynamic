@@ -1,8 +1,9 @@
 <?php
 function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
     $member = $ctx->stash( 'mtc_member' );
+    $session = $ctx->stash( 'mtc_session' );
     $get = $args[ 'get' ];
-    if ( (! $get ) || (! $member ) ) {
+    if ( (! $get ) || ( (! $member ) && (! $session ) ) ) {
         return '';
     }
     $prefix = '';
@@ -44,21 +45,32 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
     if ( $limit ) {
         $extra .= "limit ${offset},${limit} ";
     }
-    $object_id = $member->id;
-    $search_key = 'member_id';
+    if ( isset( $args[ 'ignore_delete' ] ) ) {
+        if ( $args[ 'ignore_delete' ] ) $ignore_delete = " AND delete_flag='0'";
+    }
     if ( $get == 'favorite' ) {
+        $object_id = $member->id;
+        $search_key = 'member_id';
         $table = 'goods';
         require_once( 'class.mtcgoods.php' );
         $_mtc_object = new MTCGoods;
     } elseif ( $get == 'member_coupon' ) {
+        $object_id = $member->id;
+        $search_key = 'member_id';
         $table = 'coupon';
         require_once( 'class.mtcmembercoupon.php' );
         $_mtc_object = new MTCMemberCoupon;
     } elseif ( $get == 'cart_item' ) {
+        if ( $member ) {
+            $object_id = $member->id;
+            $search_key = 'member_id';
+        } else {
+            $object_id = $session->id;
+            $search_key = 'shop_session_id';
+        }
         require_once( 'class.mtccart.php' );
         $_cart = new MTCCart;
-        $shop_session = $ctx->__stash[ 'vars' ][ 'shop_session' ];
-        $cart = $_cart->Find( "shop_session_id=${shop_session}", FALSE, FALSE, array( 'limit' => 1 ) );
+        $cart = $_cart->Find( "${search_key}=${object_id}${ignore_delete}", FALSE, FALSE, array( 'limit' => 1 ) );
         if ( is_array( $cart ) ) {
             $cart = $cart[ 0 ];
         } else {
@@ -75,7 +87,7 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
         $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = array();
         return '';
     }
-    $condition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)";
+    $condition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)${ignore_delete}";
     if ( $sort_by && ( $_mtc_object->has_column( $sort_by ) ) ) {
         $sort_by = "${table}.${sort_by}";
         $extra = " order by ${sort_by} ${sort_order} ${extra}";

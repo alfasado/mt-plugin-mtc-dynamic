@@ -15,6 +15,11 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                 'MTCDynamic' . $separator . 'php' . $separator . 'extlib' .
                 $separator . 'spyc' . $separator . 'spyc.php';
             require_once( $spyc );
+            /*
+            $php_cfg = $mt_path . $separator . 'addons' . $separator . 
+                'Commerce.pack' . $separator . 'php' . $separator . 'class.config.php';
+            require_once( $php_cfg );
+            */
             $config = Spyc::YAMLLoad( $cfg );
             if ( isset( $config[ 'SESSION_EXPIRES' ] ) ) {
                 $expires = $config[ 'SESSION_EXPIRES' ];
@@ -31,7 +36,6 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
             $ts = $ts - $expires;
             $ts = date( "YmdHis",$ts );
             $ts = $ctx->mt->db()->ts2db( $ts );
-
             $shop_session = preg_replace( '/^[0-9]*::/', '', $shop_session );
             $shop_session = $ctx->mt->db()->escape( $shop_session );
             $prefix = '';
@@ -67,6 +71,13 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                     $ctx->__stash[ 'vars' ][ $prefix . $key ] = $value;
                 }
                 return $ctx->_hdlr_if( $args, $content, $ctx, $repeat, TRUE );
+            } else {
+                require_once( 'class.mtcsession.php' );
+                $_session = new MTCSession;
+                $session = $_session->Find( "session_id = '${shop_session}' AND last_activity > '${ts}'" );
+                if ( $session ) {
+                    $ctx->stash( 'mtc_session', $session[ 0 ] );
+                }
             }
         }
     } else {
