@@ -8,18 +8,23 @@ sub _hdlr_if_mtc_logged_in {
     my ( $ctx, $args, $cond ) = @_;
     require MTC::Model::Member;
     require MTC::Model::ShopSession;
+    require MTC::Session;
     my $app = MT->instance();
     my $shop_session = $app->cookie_val( 'shop_session' );
-    $shop_session =~ s/.*?::(.*$)/$1/;
-    my $iter = MTC::Model::ShopSession->search( { session_id => $shop_session }, { limit => 1 } );
-    if (! $iter ) {
+    my ( $id, $token );
+    if ( $shop_session =~ m/(.*?)::(.*$)/ ) {
+        $id = $1;
+        $token = $2
+    }
+    my $expired = MTC::Session->session_expired_date();
+    my ( $session ) = MTC::Model::ShopSession->search(
+        { id => $id, last_activity => { op => '>', value => "$expired" } },
+        { for_update => 1 } );
+    if (! $session ) {
         return;
     }
-    my $session;
-    while ( my $ingredient = $iter->next() ) {
-        $session = $ingredient;
-    }
-    if (! $session ) {
+    if ( $session->session_id ne $token ) {
+        $session = undef;
         return;
     }
     my $member = MTC::Model::Member->lookup_un_throwable( $session->member_id );

@@ -7,6 +7,31 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
         }
         $shop_session = $_COOKIE[ 'shop_session' ];
         if ( $shop_session ) {
+            $mt_path = $ctx->mt->config( 'MTDir' );
+            $separator = DIRECTORY_SEPARATOR;
+            $cfg = $mt_path . $separator . 'addons' . $separator . 
+                'Commerce.pack' . $separator . 'mtc-config.yaml';
+            $spyc = $mt_path . $separator . 'plugins' . $separator . 
+                'MTCDynamic' . $separator . 'php' . $separator . 'extlib' .
+                $separator . 'spyc' . $separator . 'spyc.php';
+            require_once( $spyc );
+            $config = Spyc::YAMLLoad( $cfg );
+            if ( isset( $config[ 'SESSION_EXPIRES' ] ) ) {
+                $expires = $config[ 'SESSION_EXPIRES' ];
+            } else {
+                $expires = 43200;
+            }
+            $expires *= 60;
+            require_once( 'MTUtil.php' );
+            $t = time();
+            $ts = offset_time_list( $t );
+            $ts = sprintf( "%04d%02d%02d%02d%02d%02d",
+                            $ts[5]+1900, $ts[4]+1, $ts[3], $ts[2], $ts[1], $ts[0] );
+            $ts = datetime_to_timestamp( $ts );
+            $ts = $ts - $expires;
+            $ts = date( "YmdHis",$ts );
+            $ts = $ctx->mt->db()->ts2db( $ts );
+
             $shop_session = preg_replace( '/^[0-9]*::/', '', $shop_session );
             $shop_session = $ctx->mt->db()->escape( $shop_session );
             $prefix = '';
@@ -14,9 +39,9 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                 $prefix = $args[ 'prefix' ];
             }
             require_once( 'class.mtcmember.php' );
-            $where = 'member.delete_flag=0';
+            $where = "member.delete_flag=0 AND shop_session.last_activity > '${ts}'";
             if ( isset( $args[ 'ignore_delete' ] ) ) {
-                if ( $args[ 'ignore_delete' ] ) $where = '';
+                if ( $args[ 'ignore_delete' ] ) $where = "shop_session.last_activity > '${ts}'";
             }
             $condition = "(member.id=shop_session.member_id AND shop_session.session_id='$shop_session') LIMIT 1";
             if ( $where ) {
