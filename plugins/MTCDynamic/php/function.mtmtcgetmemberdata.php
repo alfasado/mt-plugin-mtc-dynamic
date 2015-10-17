@@ -101,6 +101,5 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
         }
     }
     $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = $_mtc_objects;
-    // var_dump( $ctx->__stash[ 'vars' ] );
 }
 ?>
