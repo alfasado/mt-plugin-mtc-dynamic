@@ -75,14 +75,14 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
         $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = array();
         return '';
     }
-    $confition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)";
+    $condition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)";
     if ( $sort_by && ( $_mtc_object->has_column( $sort_by ) ) ) {
         $sort_by = "${table}.${sort_by}";
         $extra = " order by ${sort_by} ${sort_order} ${extra}";
     }
     $extras[ 'join' ] = array(
         $get => array(
-            'condition' => $confition . $extra
+            'condition' => $condition . $extra
         )
     );
     $where = '';
