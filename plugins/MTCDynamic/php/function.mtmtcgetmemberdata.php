@@ -46,7 +46,7 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
         $extra .= "limit ${offset},${limit} ";
     }
     if ( isset( $args[ 'ignore_delete' ] ) ) {
-        if ( $args[ 'ignore_delete' ] ) $ignore_delete = " AND delete_flag='0'";
+        if ( $args[ 'ignore_delete' ] ) $ignore_delete = TRUE;
     }
     if ( $get == 'favorite' ) {
         $object_id = $member->id;
@@ -87,22 +87,46 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
         $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = array();
         return '';
     }
-    $condition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)${ignore_delete}";
-    if ( $sort_by && ( $_mtc_object->has_column( $sort_by ) ) ) {
-        $sort_by = "${table}.${sort_by}";
-        $extra = " order by ${sort_by} ${sort_order} ${extra}";
+    if ( $table != 'variation' ) {
+        $condition = "(${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id)";
+        if (! $ignore_delete ) {
+            $condition .= " AND ${get}.delete_flag=0 AND ${table}.delete_flag=0";
+        }
+        if ( $sort_by && ( $_mtc_object->has_column( $sort_by ) ) ) {
+            $sort_by = "${table}.${sort_by}";
+            $extra = " order by ${sort_by} ${sort_order} ${extra}";
+        }
+        $extras[ 'join' ] = array(
+            $get => array(
+                'condition' => $condition . $extra
+            )
+        );
+        $where = '';
+        $mtc_objects = $_mtc_object->Find( $where, FALSE, FALSE, $extras );
+    } else {
+        $sql = "SELECT * FROM variation,goods,cart_item WHERE goods.id=variation.goods_id AND ${get}.${search_key}=${object_id} AND ${table}.id=${get}.${table}_id";
+        if ( $sort_by && ( $_mtc_object->has_column( $sort_by ) ) ) {
+            $sort_by = "${table}.${sort_by}";
+            $sql .= " order by ${sort_by} ${sort_order} ${extra}";
+        }
+        $db = $ctx->mt->db();
+        $cart_items = $db->Execute( $sql );
+        $match_cnt = $cart_items->RecordCount();
+        $mtc_objects = array();
+        for ( $i = 0; $i < $match_cnt; $i++ ) {
+            $cart_items->Move( $i );
+            $row = $cart_items->FetchRow();
+            array_push( $mtc_objects, $row );
+        }
     }
-    $extras[ 'join' ] = array(
-        $get => array(
-            'condition' => $condition . $extra
-        )
-    );
-    $where = '';
-    $mtc_objects = $_mtc_object->Find( $where, FALSE, FALSE, $extras );
     $_mtc_objects = array();
     if ( is_array( $mtc_objects ) ) {
         foreach( $mtc_objects as $obj ) {
-            $data = $obj->GetArray();
+            if ( is_array( $obj ) ) {
+                $data = $obj;
+            } else {
+                $data = $obj->GetArray();
+            }
             if ( $prefix ) {
                 $_data = array();
                 foreach( $data as $key => $value ) {
@@ -113,6 +137,8 @@ function smarty_function_mtmtcgetmemberdata( $args, &$ctx ) {
             array_push( $_mtc_objects, $data );
         }
     }
-    $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = $_mtc_objects;
+    if ( isset( $args[ 'set' ] ) ) {
+        $ctx->__stash[ 'vars' ][ $args[ 'set' ] ] = $_mtc_objects;
+    }
 }
 ?>
