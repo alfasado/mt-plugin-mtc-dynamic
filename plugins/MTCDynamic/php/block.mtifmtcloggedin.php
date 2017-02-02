@@ -70,12 +70,9 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                 require_once( 'class.mtcsession.php' );
                 $_session = new MTCSession;
                 $session = $_session->Find( "session_id = '${shop_session}' AND last_activity > '${ts}'" );
-<<<<<<< HEAD
                 if ( $session ) {
                     $ctx->stash( 'mtc_session', $session[ 0 ] );
                 }
-=======
->>>>>>> feature-perl-dynamic
             }
         }
     } else {
