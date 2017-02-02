@@ -21,10 +21,7 @@ callbacks:
     MT::App::CMS::post_run: >
             sub {
                 my $app = MT->instance;
-                if ( $app->param( 'reboot' ) ) {
-                    $app->reboot;
-                }
                 if ( my $debug = MT->config( 'DebugMode' ) ) {
-                    $app->reboot;
+                    $app->do_reboot;
                 }
             }

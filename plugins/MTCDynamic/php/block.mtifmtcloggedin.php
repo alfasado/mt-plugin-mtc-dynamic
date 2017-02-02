@@ -15,14 +15,6 @@ function smarty_block_mtifmtcloggedin( $args, $content, &$ctx, &$repeat ) {
                 'MTCDynamic' . $separator . 'php' . $separator . 'extlib' .
                 $separator . 'spyc' . $separator . 'spyc.php';
             require_once( $spyc );
-<<<<<<< HEAD
-            /*
-            $php_cfg = $mt_path . $separator . 'addons' . $separator . 
-                'Commerce.pack' . $separator . 'php' . $separator . 'class.config.php';
-            require_once( $php_cfg );
-            */
-=======
->>>>>>> feature-perl-dynamic
             $config = Spyc::YAMLLoad( $cfg );
             if ( isset( $config[ 'SESSION_EXPIRES' ] ) ) {
                 $expires = $config[ 'SESSION_EXPIRES' ];
